@@ -1,0 +1,132 @@
+#include <Servo.h>
+class Limb{//Class for the smallest part
+  public:
+    int degree = 90;
+    Servo servo; //Connects a servo to this object
+    Limb(){
+      //Placeholder
+    }
+    Limb(int _pin){
+      //Sets up the limb, using a constructor
+      //Which means that this method is called when I instatiate this object with one arg
+      //Otherwise the other constructor would be called.
+      //Is not used because of problems with passing arguments outside of Legs constructor
+        this->servo.attach(_pin);
+        this->servo.write(degree);
+    }
+
+    void set(int _pin){//Does the same as constructor, but has the benefit that it works.
+      this->servo.attach(_pin);
+      this->servo.write(degree);
+    }
+  
+    void turn_limb(int degree){//Used for turning the servo
+      this->servo.write(degree);
+    }
+    
+   
+};
+
+class Leg{//The leg, consists of two limbs
+  public:
+  //Instatiates two limbs
+    Limb over;
+    Limb lower;
+    int start_over_degree = 90;
+    int start_lower_degree = 90;
+    Leg(){//Contructor
+      
+    }
+
+    void set(int _pin, int over_degree, int lower_degree){
+      //Used instead of constructor, gives the limbs their pins
+      over.set((_pin + 1));
+      lower.set(_pin); 
+      this->start_lower_degree = lower_degree;
+      this->start_over_degree = over_degree; 
+    }
+    
+    void leg_forward(){
+      //Turns the limbs using the degree given from body
+      this->lower.turn_limb(start_lower_degree);
+      this->over.turn_limb(start_over_degree);
+      
+    }
+
+    void leg_stretch(){
+      //Used for walking, after two rotations the limbs will return to their starting degree.
+      this->over.turn_limb(this->over.degree - ((90 - this->start_over_degree) / 2));
+      this->lower.turn_limb(this->lower.degree - ((90 - this->start_lower_degree) / 2));
+    }
+    
+      void reset(){
+        //For resetting the limbs to standing
+        over.turn_limb(90);
+        lower.turn_limb(90);
+      }
+
+    };
+
+
+class Body{
+  //Leg 1: front left
+  //Leg 2: back right
+  //Leg 3: front right
+  //Leg 4: back left
+  
+  public:
+  //Array with all the legs
+    Leg legs[4];
+  //Array with the starting degrees for the legs
+    int deg[4] = {110, 120, 76, 110};
+     
+    Body(){
+    //Setsup the limbs and legs by passing arguments to the legs
+      legs[0].set(2, deg[0], deg[1]);
+      legs[1].set(4, deg[2], deg[3]);
+      legs[2].set(6, 180 - deg[0], 180 - deg[1]);
+      legs[3].set(8, 180 - deg[2], 180 - deg[3]);
+    }
+  
+    void reset(){
+      //Resets all the legs by calling the reset methods in legs
+      for (int i = 0; i < 4; i++){
+        legs[i].reset();
+      }
+    }  
+
+    void walking(){
+      //Method for walking
+      //First it takes two legs forward
+      //Then it stretches all the legs
+      //After that it takes the other two legs forward
+      //And at last it stretches all the legs again
+      //Making them all return to their starting position
+      for (int i = 0; i < 2; i++){
+        this->legs[i].leg_forward();   
+      }
+      for (int j = 0; j < 4; j++){
+        this->legs[j].leg_stretch();
+      }
+      for (int k = 3; k < 5; k++){
+        this->legs[k].leg_forward();          
+      }
+      for (int j = 0; j < 4; j++){
+        this->legs[j].leg_stretch();
+      }
+
+    }
+};
+//Instatiates
+Body* robot = new Body(); 
+
+void setup() {
+  // put your setup code here, to run once:
+  robot -> reset();
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  robot -> walking();
+}
